@@ -1,0 +1,67 @@
+version: "3.9"
+
+volumes:
+  sonarqube_data: { }
+  sonarqube_logs: { }
+  sonarqube_extensions: { }
+  letsencrypt-certificates: { }
+
+services:
+  sonarqube:
+    image: sonarqube:9.9-community
+    container_name: sonarqube
+    restart: unless-stopped
+
+    environment:
+       SONAR_JDBC_URL: jdbc:postgresql://{{postgresql_flexible_server}}.postgres.database.azure.com:5432/postgres
+       SONAR_JDBC_USERNAME: {{administrator_login}}
+       SONAR_JDBC_PASSWORD: {{administrator_password}}
+       SONAR_WEB_JAVAADDITIONALOPTS: -javaagent:./extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=web
+       SONAR_CE_JAVAADDITIONALOPTS: -javaagent:./extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=ce
+       #sonar.jdbc.username: {{administrator_login}}
+       #sonar.jdbc.password: {{administrator_password}}
+       #sonar.jdbc.url: jdbc:postgresql://{{postgresql_flexible_server}}.postgres.database.azure.com:5432/postgres
+
+       sonar_web_javaAdditionalOpts: -javaagent:/opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=web
+       sonar_ce_javaAdditionalOpts: -javaagent:/opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=ce
+    ports:
+       - 9000
+    volumes:
+      - "sonarqube_data:/opt/sonarqube/data"
+      - "sonarqube_logs:/opt/sonarqube/logs"
+      - "sonarqube_extensions:/opt/sonarqube/extensions"
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarqube.rule=Host(`{{domain_name_label}}.westeurope.cloudapp.azure.com`)"
+      - "traefik.http.routers.sonarqube.entrypoints=websecure"
+      - "traefik.http.routers.sonarqube.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sonarqube.middlewares=compresstraefik"
+      - "traefik.http.middlewares.compresstraefik.compress=true"
+      - "traefik.http.services.sonarqubeservice.loadbalancer.server.port=9000"
+
+  traefik:
+    image: traefik:v2.9
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.forwardedHeaders.insecure"
+      - "--entryPoints.web.proxyProtocol.insecure"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entryPoints.websecure.address=:443"
+      - "--entryPoints.websecure.forwardedHeaders.insecure"
+      - "--entryPoints.websecure.proxyProtocol.insecure"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=mahdi@outlook.fr"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "letsencrypt-certificates:/letsencrypt"

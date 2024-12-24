@@ -1,0 +1,17 @@
+
+
+- name: Install New Relic infrastructure and logs
+  hosts: all
+  become: yes
+  remote_user: mahdi
+  roles:
+    - role: newrelic.newrelic_install
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    targets:
+      - infrastructure
+      - logs
+  environment:
+    NEW_RELIC_API_KEY: "{{NEW_RELIC_API_KEY}}"
+    NEW_RELIC_ACCOUNT_ID: "{{NEW_RELIC_ACCOUNT_ID}}"
+    NEW_RELIC_REGION: EU

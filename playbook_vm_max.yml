@@ -1,0 +1,72 @@
+---
+  #Il s'agit d'un libellé descriptif pour la tâche. Il est utilisé pour identifier 
+  #la tâche dans les rapports et les sorties d'exécution.
+- name: Add vm.max_map_count
+  #Cela spécifie les hôtes cibles sur lesquels la tâche sera exécutée.
+  hosts: all
+  #Cette directive indique que la tâche est exécutée avec les privilèges de superutilisateur (root). 
+  #Cela permet d'effectuer des actions nécessitant des droits élevés sur les hôtes.
+  become: yes
+  #Cela spécifie l'utilisateur distant utilisé pour se connecter aux hôtes.
+  remote_user: mahdi
+  #Cette section définit des variables pour le playbook.
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  #Cette section contient la liste des tâches à exécuter  
+  tasks:
+  # Il s'agit d'un libellé descriptif pour la tâche.
+    - name: Add vm.max_map_count to sysctl.conf
+  # Il s'agit du nom du module utilisé pour ajouter la ligne dans le fichier.
+      lineinfile:
+  # C'est le chemin complet du fichier dans lequel vous souhaitez ajouter la ligne.
+        path: /etc/sysctl.conf
+  # C'est la ligne que vous souhaitez ajouter au fichier.
+        line: "vm.max_map_count=524288"
+  #Cette directive spécifie une liste de handlers à appeler lorsque la tâche est exécutée avec succès.
+      notify:
+        - Apply sysctl changes
+  # Cette section contient la liste des handlers définis pour le playbook. Dans cet exemple, 
+  #il y a un seul handler nommé "Apply sysctl changes". 
+  #Le handler utilise le module command pour exécuter la commande sysctl -p, qui recharge les paramètres
+  # de configuration du système à partir du fichier /etc/sysctl.conf.
+  handlers:
+  #  Il s'agit du nom du handler.
+    - name: Apply sysctl changes
+  #  Il s'agit de la commande qui sera exécutée lorsque le handler est déclenché. 
+      command: sysctl -p
+
+- name: Add vm.max_map_count
+  #Il s'agit d'un libellé descriptif pour la tâche. Il est utilisé pour identifier 
+  #la tâche dans les rapports et les sorties d'exécution.
+  hosts: all
+  #Cela spécifie les hôtes cibles sur lesquels la tâche sera exécutée.
+  become: yes
+  #Cette directive indique que la tâche est exécutée avec les privilèges de superutilisateur (root). 
+  #Cela permet d'effectuer des actions nécessitant des droits élevés sur les hôtes.
+  remote_user: mahdi
+  #Cela spécifie l'utilisateur distant utilisé pour se connecter aux hôtes.
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  #Cette section définit des variables pour le playbook. 
+  tasks:
+  #Cette section contient la liste des tâches à exécuter 
+    - name: Add vm.max_map_count to sysctl.conf
+  # Il s'agit d'un libellé descriptif pour la tâche.
+      lineinfile:
+  # Il s'agit du nom du module utilisé pour ajouter la ligne dans le fichier.
+        path: /etc/sysctl.conf
+  # C'est le chemin complet du fichier dans lequel vous souhaitez ajouter la ligne.
+        line: "vm.max_map_count=524288"
+  # C'est la ligne que vous souhaitez ajouter au fichier.
+      notify:
+        - Apply sysctl changes
+  #Cette directive spécifie une liste de handlers à appeler lorsque la tâche est exécutée avec succès.
+  handlers:
+  # Cette section contient la liste des handlers définis pour le playbook. Dans cet exemple, 
+  #il y a un seul handler nommé "Apply sysctl changes". 
+  #Le handler utilise le module command pour exécuter la commande sysctl -p, qui recharge les paramètres
+  # de configuration du système à partir du fichier /etc/sysctl.conf.
+    - name: Apply sysctl changes
+  #  Il s'agit du nom du handler.
+      command: sysctl -p
+  #  Il s'agit de la commande qui sera exécutée lorsque le handler est déclenché. 

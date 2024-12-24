@@ -1,0 +1,39 @@
+---
+- name: Installer Docker et Docker Compose
+  hosts: all
+  become: yes
+  remote_user: mahdi
+  tasks:
+    - name: Installation des dépendances pour Docker
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common']
+        state: present
+    - name: Ajout de la clé GPG pour le référentiel Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: Ajout du référentiel Docker aux sources APT
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+    - name: Installation de Docker Engine
+      apt:
+        name: docker-ce
+        state: latest
+    - name: Installation de Docker Compose
+      apt:
+        name: docker-compose
+        state: latest
+    - name: Démarrer et activer le service Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Generate Docker Compose 
+      template:
+        src: docker-compose-template.yml.j2
+        dest: /home/mahdi/docker-compose.yml
+    - name: Lancer Docker Compose
+      command: docker compose up -d
+      args:
+        chdir: /home/mahdi

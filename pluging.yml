@@ -1,0 +1,46 @@
+- name: Install SonarQube Community Branch Plugin
+  hosts: all
+  become: yes
+  remote_user: mahdi
+  vars:
+    plugin_version: 1.14.0
+
+  tasks:
+
+    - name: Créer le répertoire des plugins SonarQube
+      file:
+        path: /opt/sonarqube/extensions/plugins
+        state: directory
+        mode: '0755'
+
+    - name: Télécharger le plugin
+      get_url:
+        url: https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/1.14.0/sonarqube-community-branch-plugin-1.14.0.jar
+        dest: /opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar
+    - name: Créer le répertoire des configurations SonarQube
+      file:
+        path: /opt/sonarqube/conf
+        state: directory
+        mode: '0755'
+
+    - name: Créer le fichier sonar.properties s'il n'existe pas
+      file:
+        path: /opt/sonarqube/conf/sonar.properties
+        state: touch
+        mode: '0644'
+
+    - name: Ajouter les configurations au fichier sonar.properties
+      lineinfile:
+        path: /opt/sonarqube/conf/sonar.properties
+        line: "{{ item }}"
+        insertafter: EOF
+      with_items:
+       - "SONAR_JDBC_URL=jdbc:postgresql://sonarqubeserver.postgres.database.azure.com:5432/postgres"
+       - "SONAR_JDBC_USERNAME=mahdi"
+       - "SONAR_JDBC_PASSWORD=mahdi12345A"
+       - "SONAR_WEB_JAVAADDITIONALOPTS=-javaagent:/opt/sonarqube/sonarqube-community-branch-plugin-1.14.0.jar=web"
+       - "SONAR_CE_JAVAADDITIONALOPTS=-javaagent:/opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=ce"
+    - name: Restart Docker Compose services
+      command: sudo docker compose restart
+      args:
+        chdir: /home/mahdi
